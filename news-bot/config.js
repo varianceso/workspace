@@ -10,7 +10,7 @@ module.exports = {
 
   minimax: {
     baseUrl: 'https://api.minimaxi.com',
-    apiKey: 'sk-cp-XXXXXXXXXXXXXXXXXXXXXXXX', // fallback, 实际从环境变量读取
+    apiKey: 'sk-cp-p1lr36wmoABLr505CaisHsSJViy7toJJGANh-zSnOkWBnKl9JNm-xR8fnUqDBNCuIsDhG6E88dtO5I3WdmvXwl9Yg1Q7ytxtJ6Goun3IKKKXorF12AwPYdk',
     model: 'MiniMax-M2.7',
   },
 
