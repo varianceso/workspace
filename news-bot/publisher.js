@@ -3,42 +3,76 @@
  * 干净库（708e7d5dd9cf43bb963ff5198ff4c1e3），无多数据源限制
  * 属性：Name（标题）
  *
- * 文章模板：Harness Engineering 风格
  * 支持的文本标记：
- * [heading_2: 标题] → Notion heading_2
- * [heading_3: 标题] → Notion heading_3
- * [callout: 内容]  → Notion callout
- * [checklist: 内容] → Notion to_do
- * [divider]        → Notion divider
- * 裸文本行 → Notion paragraph
+ * [meta]             → Notion callout（顶部元信息）
+ * [heading_2: 标题]  → Notion heading_2
+ * [heading_3: 标题]  → Notion heading_3
+ * [bulleted_list_item: 内容] → Notion bulleted_list_item
+ * [paragraph: 内容]  → Notion paragraph（可选标记）
+ * [divider]          → Notion divider
+ * - xxx               → Notion bulleted_list_item（裸bullet）
+ * 裸文本行            → Notion paragraph
  */
 
 const config = require('./config');
 
 function buildBlocks(content) {
   const blocks = [];
-  const lines = content.split('\n');
-  let i = 0;
 
-  function isSectionTag(line, tag) {
+  function isMetaTag(line) {
+    return line.trim() === '[meta]';
+  }
+
+  function isTag(line, tag) {
     const t = line.trim();
     if (tag === 'divider') return t === '[divider]' || t === '[divider ]';
+    if (tag === 'meta') return isMetaTag(line);
     return t.startsWith(`[${tag}:`);
   }
 
-  function extractSectionContent(line, tag) {
+  function extractTag(line, tag) {
     const regex = new RegExp(`^\\[${tag}:\\s*(.*)`);
     const m = line.match(regex);
-    return m ? m[1].replace(/]\s*$/, '').trim() : '';
+    return m ? m[1].trim() : '';
   }
 
-  function pushParagraph(text) {
+  function pushPara(text) {
     const t = text.trim();
     if (!t) return;
     blocks.push({
       object: 'block',
       type: 'paragraph',
       paragraph: { rich_text: [{ type: 'text', text: { content: t } }] },
+    });
+  }
+
+  function pushBulleted(text) {
+    const t = text.trim();
+    if (!t) return;
+    blocks.push({
+      object: 'block',
+      type: 'bulleted_list_item',
+      bulleted_list_item: { rich_text: [{ type: 'text', text: { content: t } }] },
+    });
+  }
+
+  function pushH2(text) {
+    const t = text.trim();
+    if (!t) return;
+    blocks.push({
+      object: 'block',
+      type: 'heading_2',
+      heading_2: { rich_text: [{ type: 'text', text: { content: t } }], color: 'default' },
+    });
+  }
+
+  function pushH3(text) {
+    const t = text.trim();
+    if (!t) return;
+    blocks.push({
+      object: 'block',
+      type: 'heading_3',
+      heading_3: { rich_text: [{ type: 'text', text: { content: t } }], color: 'default' },
     });
   }
 
@@ -50,103 +84,76 @@ function buildBlocks(content) {
       type: 'callout',
       callout: {
         rich_text: [{ type: 'text', text: { content: t } }],
-        icon: { type: 'emoji', emoji: '💡' },
+        icon: { type: 'emoji', emoji: '📌' },
       },
     });
   }
 
-  function pushChecklist(text) {
-    const t = text.trim();
-    if (!t) return;
-    blocks.push({
-      object: 'block',
-      type: 'to_do',
-      to_do: {
-        rich_text: [{ type: 'text', text: { content: t } }],
-        checked: false,
-      },
-    });
-  }
+  const lines = content.split('\n');
+  let i = 0;
 
   while (i < lines.length) {
     const raw = lines[i];
     const line = raw;
+    const trimmed = line.trim();
+
+    if (!trimmed) { i++; continue; }
 
     // [divider]
-    if (isSectionTag(line, 'divider')) {
+    if (isTag(line, 'divider')) {
       blocks.push({ object: 'block', type: 'divider', divider: {} });
       i++;
       continue;
     }
 
+    // [meta] - 收集所有后续非tag行作为元信息callout
+    if (isTag(line, 'meta')) {
+      let metaLines = [];
+      i++;
+      while (i < lines.length) {
+        const next = lines[i].trim();
+        if (!next) break;
+        if (/^\[(heading_|bulleted_list_item|paragraph|divider|meta|callout)/.test(next)) break;
+        metaLines.push(next);
+        i++;
+      }
+      pushCallout(metaLines.join('\n'));
+      continue;
+    }
+
     // [heading_2: 标题]
-    if (isSectionTag(line, 'heading_2')) {
-      const text = extractSectionContent(line, 'heading_2');
-      blocks.push({
-        object: 'block',
-        type: 'heading_2',
-        heading_2: { rich_text: [{ type: 'text', text: { content: text } }], color: 'default' },
-      });
+    if (isTag(line, 'heading_2')) {
+      const text = extractTag(line, 'heading_2');
+      pushH2(text);
       i++;
       continue;
     }
 
     // [heading_3: 标题]
-    if (isSectionTag(line, 'heading_3')) {
-      const text = extractSectionContent(line, 'heading_3');
-      blocks.push({
-        object: 'block',
-        type: 'heading_3',
-        heading_3: { rich_text: [{ type: 'text', text: { content: text } }], color: 'default' },
-      });
+    if (isTag(line, 'heading_3')) {
+      const text = extractTag(line, 'heading_3');
+      pushH3(text);
       i++;
       continue;
     }
 
-    // [callout: 内容] 或 [meta callout] 开头
-    if (isSectionTag(line, 'callout') || line.trim().startsWith('[meta callout')) {
-      let calloutText = '';
-      // 如果是 [meta callout - xxx] 格式，收集后续行直到遇到 tag
-      if (line.trim().startsWith('[meta callout')) {
-        i++;
-        while (i < lines.length) {
-          const next = lines[i].trim();
-          if (!next) break;
-          if (/^\[(heading_|callout:|checklist:|divider)/.test(next)) break;
-          calloutText += (calloutText ? '\n' : '') + next;
-          i++;
-        }
-      } else {
-        calloutText = extractSectionContent(line, 'callout');
-        i++;
-        while (i < lines.length) {
-          const next = lines[i].trim();
-          if (!next) break;
-          if (/^\[(heading_|callout:|checklist:|divider)/.test(next)) break;
-          // 如果是 bullet 行（- 开头），转为 paragraph
-          if (next.startsWith('- ')) {
-            pushParagraph(next.substring(2));
-            i++;
-            continue;
-          }
-          calloutText += '\n' + next;
-          i++;
-        }
-      }
-      if (calloutText.trim()) pushCallout(calloutText.trim());
-      continue;
-    }
-
-    // [checklist: 内容]
-    if (isSectionTag(line, 'checklist')) {
-      const text = extractSectionContent(line, 'checklist');
-      pushChecklist(text);
+    // [bulleted_list_item: 内容]
+    if (isTag(line, 'bulleted_list_item')) {
+      const text = extractTag(line, 'bulleted_list_item');
+      pushBulleted(text);
       i++;
       continue;
     }
 
-    // 普通文本行
-    pushParagraph(line);
+    // 裸 bullet 行
+    if (trimmed.startsWith('- ')) {
+      pushBulleted(trimmed.substring(2));
+      i++;
+      continue;
+    }
+
+    // 普通文本行 → paragraph
+    pushPara(trimmed);
     i++;
   }
 
