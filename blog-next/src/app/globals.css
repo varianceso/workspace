@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf8f5;
+  --foreground: #2c2c2c;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Noto Serif SC', 'STSong', 'SimSun', serif;
+  line-height: 2;
+  font-size: 17px;
+}
+
+/* 顶部封面 */
+.hero {
+  height: 45vh;
+  background: linear-gradient(135deg, rgba(20,30,48,0.85) 0%, rgba(36,59,85,0.75) 100%),
+              url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=80') center/cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 标题字体 */
+h1, .title-font {
+  font-family: 'ZCOOL XiaoWei', 'Ma Shan Zheng', serif;
+}
+
+/* 文章容器 */
+.article-container {
+  max-width: 720px;
+  margin: -60px auto 60px;
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+  padding: 50px 55px;
+}
+
+/* H2 样式 */
+h2 {
+  font-family: 'ZCOOL XiaoWei', 'Ma Shan Zheng', serif;
+  font-size: 1.35em;
+  color: #2c2c2c;
+  margin: 2.5em 0 1em;
+  font-weight: 400;
+  border-left: 3px solid #8b7355;
+  padding-left: 15px;
+}
+
+/* 段落样式 */
+p {
+  margin: 1.1em 0;
+  text-align: justify;
+  text-indent: 2em;
+}
+
+/* 引用块 */
+blockquote {
+  border-left: 2px solid #d4c4b0;
+  padding: 10px 20px;
+  margin: 1.8em 0;
+  color: #5d4e37;
+  background: #faf8f5;
+  font-style: italic;
+  text-indent: 0;
+}
+
+/* 分割线 */
+hr {
+  border: none;
+  border-top: 1px dashed #e0d8cf;
+  margin: 2.5em 0;
+}
+
+/* 分类标签颜色 */
+.category-系统与历史 { border-left-color: #e74c3c; }
+.category-记录与思考 { border-left-color: #3498db; }
+.category-小说 { border-left-color: #9b59b6; }
+.category-技术与现实 { border-left-color: #e67e22; }
+.category-经典语录 { border-left-color: #8e44ad; }
+.category-大纲 { border-left-color: #16a085; }
