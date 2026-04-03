@@ -22,8 +22,8 @@ async function run() {
 
   console.log(`\n[${new Date().toLocaleString('zh-CN')}] 开始采集...`);
 
-  // 1. 采集 RSS
-  const { articles, errors } = await collectAll(config.rssSources);
+  // 1. 采集 RSS + Tavily 搜索
+  const { articles, errors } = await collectAll(config.rssSources, config.agentTopics);
   collected = articles.length;
 
   if (errors.length) {

@@ -172,14 +172,19 @@ async function publishToNotion(article) {
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
-      'Notion-Version': '2025-09-03',
+      'Notion-Version': '2022-06-28',
     },
     body: JSON.stringify({
       parent: { database_id: databaseId },
       properties: {
-        'Name': {
+        '文档名称': {
           title: [{ type: 'text', text: { content: article.title } }],
         },
+        ...(article.category ? {
+          '类别': {
+            select: { name: article.category },
+          },
+        } : {}),
       },
       children,
     }),
